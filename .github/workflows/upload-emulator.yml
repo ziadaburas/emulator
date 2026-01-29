@@ -1,0 +1,45 @@
+name: Download, Unzip and Release
+
+on:
+  workflow_dispatch: # يسمح لك بتشغيل الورك فلو يدوياً بضغطة زر
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # إذن للكتابة وإنشاء Release
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download the ZIP file
+        run: |
+          # تحميل الملف وتسميته archive.zip لتسهيل التعامل معه
+          # تم وضع الرابط بين علامات تنصيص للتعامل مع المسافات (%20)
+          wget -O archive.zip "https://archive.org/download/sudachiemulator-all-device/sudachiemulator-all%20device.zip"
+
+      - name: Unzip the file
+        run: |
+          # إنشاء مجلد لوضع الملفات فيه
+          mkdir extracted_files
+          # فك الضغط داخل المجلد
+          unzip archive.zip -d extracted_files
+          
+          # عرض الملفات للتأكد في السجلات (اختياري)
+          echo "Listing extracted files:"
+          ls -R extracted_files
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          # اسم التاج سيكون تاريخ التشغيل ورقم المحاولة لضمان عدم التكرار
+          tag_name: v1.0.${{ github.run_number }}
+          name: Sudachi Emulator Release ${{ github.run_number }}
+          draft: false
+          prerelease: false
+          # هذا السطر هو المسؤول عن رفع كل ملف بداخل المجلد بشكل منفصل
+          files: extracted_files/*
+        env:
+          # استخدام التوكن الخاص بك كما طلبت
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
